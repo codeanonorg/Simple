@@ -2,7 +2,10 @@
 name = "simple"
 version = "0.1.0"
 description = "Websites made simple"
-authors = ["Nathan Graule <solarliner@gmail.com>"]
+authors = [
+  "Nathan Graule <solarliner@gmail.com>",
+  "Arthur Correnson <arthur.correnson@ens-rennes.fr>"
+]
 license = "MIT"
 
 [tool.poetry.dependencies]
