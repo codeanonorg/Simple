@@ -4,7 +4,8 @@ version = "0.1.0"
 description = "Websites made simple"
 authors = [
   "Nathan Graule <solarliner@gmail.com>",
-  "Arthur Correnson <arthur.correnson@ens-rennes.fr>"
+  "Arthur Correnson <arthur.correnson@ens-rennes.fr>",
+  "Tarek Kunze <arxaqapi@protonmail.com>"
 ]
 license = "MIT"
 
