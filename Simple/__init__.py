@@ -39,9 +39,6 @@ def parse_args(args: List[str]) -> Options:
 def main(args: List[str]) -> int:
     opts = parse_args(args[1:])
     create_logger(opts.log_level)
-    logger = logging.getLogger(__name__)
-    logger.info(f"Options: {opts}")
-
     simplifier(opts.input[0])
 
     return 0

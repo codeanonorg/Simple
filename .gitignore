@@ -131,3 +131,6 @@ dmypy.json
 # MAC artefacts
 .DS_Store
 **/.DS_Store
+
+# Examples
+public/

@@ -11,7 +11,10 @@ from bs4 import BeautifulSoup, ResultSet
 
 
 def simplifier(html_file: str):
-    # Get paths from included files 
+
+    logger = logging.getLogger(__name__)
+
+    # Get paths from included files
     included_components = []
     with open(html_file, 'r') as fp:
         parsed_soup = BeautifulSoup(fp, 'html.parser')
@@ -23,16 +26,20 @@ def simplifier(html_file: str):
     # load included files
     included_components_body = {}
     for file in included_components:
-        with open("examples/" + file, 'r') as fp:
+        component_path = os.path.join("examples", file)
+        with open(component_path, 'r') as fp:
+            logger.info(f"found component @ {component_path}")
             included_components_body[file] = BeautifulSoup(fp, 'html.parser')
 
     # Get position and include into main tree
-    for component in included_components_body:
-        included_components_body[component].find('def').replaceWithChildren()
-        # TODO: Remove prefix in a more clean way
+    for component_path in included_components_body:
+        included_components_body[component_path].find(
+            'def').replaceWithChildren()
+        file_name = os.path.basename(component_path)
+        component = os.path.splitext(file_name)[0].lower()
         parsed_soup.find(
-            component.removeprefix('./').removesuffix('.html').lower()
-        ).replaceWith(included_components_body[component])
+            component
+        ).replaceWith(included_components_body[component_path])
 
     # Write file to public
     public_path = 'public/'
