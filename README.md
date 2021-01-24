@@ -10,6 +10,11 @@ Writing websites may be painful. There's a ton of frameworks and complicated too
 
 ## Simple examples
 
+**Simple** is ... well .. *simple* to use. Plug in your html file and just wait, but not too long, it's only copy-pasting code.
+```bash
+$ python -m Simple examples/main.html
+```
+
 ## It's simple to use
 
 ## It's simple to contribute
