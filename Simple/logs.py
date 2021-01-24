@@ -1,4 +1,7 @@
+import sys
 import logging
+
+FORMAT = "[%(name)s] %(levelname)s %(message)s"
 
 
 class ColoredFormatter(logging.Formatter):
@@ -18,19 +21,9 @@ class ColoredFormatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 
-class ColoredLogger(logging.Logger):
-    FORMAT = "[%(name)s] %(levelname)s %(message)s"
-
-    def __init__(self, name):
-        logging.Logger.__init__(self, name, logging.DEBUG)
-
-        color_formatter = ColoredFormatter(self.FORMAT)
-
-        console = logging.StreamHandler()
-        console.setFormatter(color_formatter)
-
-        self.addHandler(console)
-        return
-
-
-logging.setLoggerClass(ColoredLogger)
+def create_logger(log_level: int):
+    logger = logging.getLogger()
+    logger.setLevel(log_level)
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setFormatter(ColoredFormatter(FORMAT))
+    logger.addHandler(handler)
