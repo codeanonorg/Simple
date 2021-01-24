@@ -16,34 +16,33 @@ def simplifier(html_file: str):
 
     # Get paths from included files
     included_components = []
-    with open(html_file, 'r') as fp:
-        parsed_soup = BeautifulSoup(fp, 'html.parser')
-    extracted_include_components = parsed_soup.find_all('include')
+    with open(html_file, "r") as fp:
+        parsed_soup = BeautifulSoup(fp, "html.parser")
+    extracted_include_components = parsed_soup.find_all("include")
     for element in extracted_include_components:
-        included_components.append(element.attrs['src'])
+        included_components.append(element.attrs["src"])
         element.extract()
 
     # load included files
     included_components_body = {}
     for file in included_components:
         component_path = os.path.join("examples", file)
-        with open(component_path, 'r') as fp:
+        with open(component_path, "r") as fp:
             logger.info(f"found component @ {component_path}")
-            included_components_body[file] = BeautifulSoup(fp, 'html.parser')
+            included_components_body[file] = BeautifulSoup(fp, "html.parser")
 
     # Get position and include into main tree
     for component_path in included_components_body:
-        included_components_body[component_path].find(
-            'def').replaceWithChildren()
+        included_components_body[component_path].find("def").replaceWithChildren()
         file_name = os.path.basename(component_path)
         component = os.path.splitext(file_name)[0].lower()
-        parsed_soup.find(
-            component
-        ).replaceWith(included_components_body[component_path])
+        parsed_soup.find(component).replaceWith(
+            included_components_body[component_path]
+        )
 
     # Write file to public
-    public_path = 'public/'
+    public_path = "public/"
     if not os.path.exists(public_path):
         os.makedirs(public_path)
-    with open(public_path + str(html_file).split('/')[-1], 'w') as fp:
+    with open(public_path + str(html_file).split("/")[-1], "w") as fp:
         fp.writelines(parsed_soup.prettify())
