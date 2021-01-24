@@ -12,6 +12,7 @@ from pathlib import Path
 from argparse import ArgumentParser
 from dataclasses import dataclass
 
+from Simple.def_parser import get_all_named_components
 
 @dataclass
 class Options:
@@ -42,5 +43,7 @@ def main(args: List[str]) -> int:
     create_logger(opts.log_level)
     logger = logging.getLogger(__name__)
     logger.info(f"Options: {opts}")
+
+    get_all_named_components('def', opts.input[0])
 
     return 0
