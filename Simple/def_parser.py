@@ -7,6 +7,7 @@
 
 import os
 import logging
+import copy
 from bs4 import BeautifulSoup, ResultSet
 
 
@@ -17,8 +18,8 @@ def simplifier(html_file: str):
     # Get paths from included files
     included_components = []
     with open(html_file, "r") as fp:
-        parsed_soup = BeautifulSoup(fp, "html.parser")
-    extracted_include_components = parsed_soup.find_all("include")
+        main_html = BeautifulSoup(fp, "html.parser")
+    extracted_include_components = main_html.find_all("include")
     for element in extracted_include_components:
         included_components.append(element.attrs["src"])
         element.extract()
@@ -34,15 +35,15 @@ def simplifier(html_file: str):
     # Get position and include into main tree
     for component_path in included_components_body:
         included_components_body[component_path].find("def").replaceWithChildren()
-        file_name = os.path.basename(component_path)
-        component = os.path.splitext(file_name)[0].lower()
-        parsed_soup.find(component).replaceWith(
-            included_components_body[component_path]
-        )
+        file_name: str = os.path.basename(component_path)
+        component: str = os.path.splitext(file_name)[0].lower()
+        placeholders = main_html.find_all(component)
+        for placeholder in placeholders:
+            placeholder.replaceWith(copy.copy(included_components_body[component_path]))
 
     # Write file to public
     public_path = "public/"
     if not os.path.exists(public_path):
         os.makedirs(public_path)
     with open(public_path + str(html_file).split("/")[-1], "w") as fp:
-        fp.writelines(parsed_soup.prettify())
+        fp.writelines(main_html.prettify())
