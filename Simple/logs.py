@@ -41,3 +41,4 @@ def create_logger(log_level: int):
     handler = logging.StreamHandler(sys.stderr)
     handler.setFormatter(ColoredFormatter(FORMAT))
     logger.addHandler(handler)
+    return logger
