@@ -7,7 +7,13 @@ authors = [
   "Arthur Correnson <arthur.correnson@ens-rennes.fr>",
   "Tarek Kunze <arxaqapi@protonmail.com>"
 ]
+packages = [
+  { include = "Simple" }
+]
 license = "MIT"
+
+[tool.poetry.scripts]
+simple = "Simple.__main__:run"
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -21,6 +27,7 @@ commitizen = "^2.14.0"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
 [tool.commitizen]
 name = "cz_conventional_commits"
 version = "0.0.1"

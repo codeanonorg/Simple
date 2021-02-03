@@ -46,3 +46,9 @@ def main(args: List[str]) -> int:
         f.write(doc.render({}).prettify())
 
     return 0
+
+
+def run():
+    import sys
+
+    sys.exit(main(sys.argv))

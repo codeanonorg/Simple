@@ -6,6 +6,6 @@
 """
 
 import sys
-from Simple import main
+from Simple import run
 
-exit(main(sys.argv))
+run()
