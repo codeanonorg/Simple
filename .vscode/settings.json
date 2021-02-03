@@ -4,6 +4,5 @@
   "licenser.license": "MIT",
   "licenser.projectName": "Simple",
   "licenser.useSingleLineStyle": false,
-  "python.formatting.provider": "black",
-  "python.pythonPath": "/home/solarliner/.cache/pypoetry/virtualenvs/simple-dTyayT0S-py3.9/bin/python"
+  "python.formatting.provider": "black"
 }
