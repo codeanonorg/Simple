@@ -26,7 +26,9 @@ class Options:
 def parse_args(args: List[str]) -> Options:
     parser = ArgumentParser()
     parser.add_argument("input", nargs=1, type=Path, help="Input HTML file to process")
-    parser.add_argument("-o", "--output", nargs=1, type=Path, help="Output file path")
+    parser.add_argument(
+        "-o", "--output", required=True, nargs=1, type=Path, help="Output file path"
+    )
     parser.add_argument(
         "-v", action="count", default=0, help="Increase verbosity level"
     )
