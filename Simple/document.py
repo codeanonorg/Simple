@@ -37,7 +37,7 @@ class Document:
             self.is_component = True
             self.name = str(tag.attrs["name"])
             try:
-                self.inputs = [s.strip() for s in self.html.attrs["props"].split(",")]
+                self.inputs = [s.strip() for s in tag.attrs["props"].split(",")]
             except KeyError:
                 self.inputs = []
         else:
@@ -56,24 +56,44 @@ class Document:
             self.components[component.name] = component
 
     def render(self, context: Dict[str, str]) -> BeautifulSoup:
+        # Getting a working copy of the structure
         html = copy.deepcopy(self.html)
+        # Getting all 'content' tags
+        contents = html.find_all("content")
 
+        # Replacing content tags with variables in context
+        for c in contents:
+            if "prop" not in c.attrs:
+                logger.warn(f"Content tag should have a 'prop' attribute")
+                c.remove()
+            elif c.attrs["prop"] not in context:
+                logger.warn(f"Variable '{c.attrs['prop']}' not defined in context")
+                c.remove()
+            else:
+                logger.info("Ok")
+                c.replace_with(context[c.attrs["prop"]])
+
+        # Inserting components
         for name, component in self.components.items():
             tags = html.find_all(name.lower())
+
             if len(tags) == 0:
                 logger.warn(f"Component '{name}' is unused in document '{self.path}'")
             else:
                 for tag in tags:
                     props = dict(tag.attrs)
                     for s in props.keys():
-                        if s not in component.input:
+                        if s not in component.inputs:
                             logger.warn(
                                 f"Attribute '{s}' is not used in component '{name}'"
                             )
                     child_context = {**context, **props}
                     tag.replace_with(component.render(child_context))
+
+        # removing the "def" part
         if self.is_component:
             html.find("def").replace_with_children()
+
         return html
 
 
