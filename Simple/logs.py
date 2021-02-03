@@ -10,12 +10,14 @@ class ColoredFormatter(logging.Formatter):
     COLOR_GREEN = "\033[1;32m"
     COLOR_YELLOW = "\033[1;33m"
     COLOR_MAGENTA = "\033[1;35m"
+    COLOR_BLUE = "\033[36m"
     COLOR_NEUTRAL = "\033[0m"
 
     COLORS = {
         "WARNING": COLOR_MAGENTA,
         "ERROR": COLOR_RED,
         "INFO": COLOR_YELLOW,
+        "DEBUG": COLOR_BLUE,
     }
 
     def __init__(self, msg, use_color=True):
