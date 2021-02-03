@@ -24,18 +24,18 @@ class Options:
 
 
 def parse_args(args: List[str]) -> Options:
-    parser = ArgumentParser()
+    parser = ArgumentParser(prog=__name__)
     parser.add_argument("input", nargs=1, type=Path, help="Input HTML file to process")
     parser.add_argument("-o", "--output", nargs=1, type=Path, help="Output file path")
     parser.add_argument(
         "-v", action="count", default=0, help="Increase verbosity level"
     )
-    args = parser.parse_args(args)
+    args = parser.parse_args(args[1:])
     return Options(args.input[0], args.output[0], logging.WARN - args.v * 10)
 
 
 def main(args: List[str]) -> int:
-    opts = parse_args(args[1:])
+    opts = parse_args(args)
     logger = create_logger(opts.log_level)
 
     doc = Document(opts.input)
