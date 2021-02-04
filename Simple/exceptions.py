@@ -6,9 +6,10 @@
 """
 
 
-from typing import Optional
-
-
-class ProcessedException(Exception):
-    def __init__(self, exn: Optional[Exception]) -> None:
+class ProcessException(Exception):
+    def __init__(self, doc: "Simple.document.Document", exn: Exception) -> None:
+        self.doc = doc
         self.exn = exn
+
+    def __str__(self) -> str:
+        return f"{self.doc.path}: {self.exn}"
