@@ -7,7 +7,7 @@
     {
       "name": "Simple",
       "type": "python",
-      "args": ["examples/main.html", "--output=public/main.html"],
+      "args": ["examples/main.html", "--output=public/main.html", "-vv"],
       "request": "launch",
       "module": "Simple"
     }
