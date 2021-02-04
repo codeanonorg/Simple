@@ -67,14 +67,11 @@ class Document:
                 raise ProcessedException(None)
             self.components[component.name] = component
 
-    def render(
-        self, context: Dict[str, str], children: Iterable[Tag] = []
-    ) -> BeautifulSoup:
+    def render(self, context: Dict[str, str]) -> BeautifulSoup:
         # Getting a working copy of the structure
         html = copy.deepcopy(self.html)
 
         self._replace_props(html, context)
-        self._replace_children(html, children)
         self._replace_components(html, context)
 
         # removing the "def" part
@@ -96,10 +93,6 @@ class Document:
                             self.adapter.warn(f"Unknown attribute '{s}' in <{name} />")
                     child_context = {**context, **props}
                     tag.replace_with(component.render(child_context, tag.children))
-
-    def _replace_children(self, html: BeautifulSoup, children: Iterable[Tag]):
-        if (placeholder := html.find("children")) is not None:
-            placeholder.replace_with(children)
 
     def _replace_props(self, html: BeautifulSoup, context: Dict[str, str]):
         for c in html.find_all("content"):
