@@ -6,6 +6,7 @@
 """
 
 import logging
+from textwrap import wrap
 
 from functools import partial
 from typing import List, Literal, Union
@@ -25,12 +26,15 @@ class Options:
     log_level: int
 
 
-def filepath(
-    mode: Union[Literal["read"], Literal["write"]], s: str
-) -> Union[Path, Literal["stdio"]]:
+def filepath(mode: Union[Literal["read"], Literal["write"]], s: str) -> Path:
     if s == "-":
-        return "stdio"
-
+        raise ArgumentTypeError(
+            "\n\t".join(
+                wrap(
+                    f"Reading from stdin is not supported. Please use the `<(command)` shell syntax, which provides a temporary file path containing `command`'s standard output, to chain data from other commands."
+                )
+            )
+        )
     p = Path(s)
     if mode == "read":
         try:
