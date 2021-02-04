@@ -28,7 +28,7 @@ class Document:
     components: Dict[str, "Document"]
 
     def __init__(
-        self, path: os.PathLike[str], parent: Optional["Document"] = None
+        self, path: os.PathLike[str], *, parent: Optional["Document"] = None
     ) -> None:
         self.path = Path(path).resolve().absolute()
         self.cwd = self.path.parent
@@ -36,9 +36,9 @@ class Document:
         self.parent = parent
 
         try:
-        with path.open("rt") as f:
-            logger.debug(f"Parsing file '{path}'")
-            self.html = BeautifulSoup(f, "html.parser")
+            with path.open("rt") as f:
+                logger.debug(f"Parsing file '{path}'")
+                self.html = BeautifulSoup(f, "html.parser")
         except IOError as ex:
             self.adapter.critical(f"Cannot parse document: {ex}")
             raise ProcessedException(ex)
