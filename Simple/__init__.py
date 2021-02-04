@@ -10,7 +10,7 @@ import logging
 from functools import partial
 from typing import List, Literal, Union
 from pathlib import Path
-from argparse import ArgumentParser, ArgumentTypeError
+from argparse import ArgumentParser, ArgumentTypeError, Namespace
 from dataclasses import dataclass
 
 from .document import Document
@@ -44,7 +44,7 @@ def filepath(
 
 
 def parse_args(args: List[str]) -> Options:
-    parser = ArgumentParser(prog=__name__)
+    parser = ArgumentParser()
     parser.add_argument(
         "input",
         nargs=1,
@@ -62,8 +62,8 @@ def parse_args(args: List[str]) -> Options:
     parser.add_argument(
         "-v", action="count", default=0, help="Increase verbosity level"
     )
-    args = parser.parse_args(args[1:])
-    return Options(args.input[0], args.output[0], logging.WARN - args.v * 10)
+    parsed: Namespace = parser.parse_args(args[1:])
+    return Options(parsed.input[0], parsed.output[0], logging.WARN - parsed.v * 10)
 
 
 def main(args: List[str]) -> int:

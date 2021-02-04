@@ -6,6 +6,9 @@
 """
 
 
+from typing import Optional
+
+
 class ProcessedException(Exception):
-    def __init__(self, exn: Exception) -> None:
+    def __init__(self, exn: Optional[Exception]) -> None:
         self.exn = exn

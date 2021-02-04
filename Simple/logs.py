@@ -10,7 +10,9 @@ FORMAT = "%(levelname)s: %(message)s"
 
 
 class DocumentLogAdapter(logging.LoggerAdapter):
-    def __init__(self, logger: logging.Logger, document: "Document") -> None:
+    def __init__(
+        self, logger: logging.Logger, document: "Simple.document.Document"  # type: ignore
+    ) -> None:
         super().__init__(logger, {"document": document})
 
     def process(self, msg: str, kwargs: MutableMapping) -> Tuple[str, MutableMapping]:

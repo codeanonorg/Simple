@@ -12,7 +12,8 @@ import logging
 import copy
 from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Optional, TypeVar
-from bs4 import BeautifulSoup, Tag
+
+from bs4 import BeautifulSoup, Tag  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ class Document:
         self.parent = parent
 
         try:
-            with path.open("rt") as f:
+            with self.path.open("rt") as f:
                 logger.debug(f"Parsing file '{path}'")
                 self.html = BeautifulSoup(f, "html.parser")
         except IOError as ex:
@@ -92,7 +93,7 @@ class Document:
                         if s not in component.inputs:
                             self.adapter.warn(f"Unknown attribute '{s}' in <{name} />")
                     child_context = {**context, **props}
-                    tag.replace_with(component.render(child_context, tag.children))
+                    tag.replace_with(component.render(child_context))
 
     def _replace_props(self, html: BeautifulSoup, context: Dict[str, str]):
         for c in html.find_all("content"):
