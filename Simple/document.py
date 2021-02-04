@@ -5,7 +5,8 @@
  https://opensource.org/licenses/MIT
 """
 
-from Simple.logs import DocumentLogAdapter
+from .exceptions import ProcessedException
+from .logs import DocumentLogAdapter
 import os
 import logging
 import copy
@@ -34,9 +35,13 @@ class Document:
         self.adapter = DocumentLogAdapter(logger, self)
         self.parent = parent
 
+        try:
         with path.open("rt") as f:
             logger.debug(f"Parsing file '{path}'")
             self.html = BeautifulSoup(f, "html.parser")
+        except IOError as ex:
+            self.adapter.critical(f"Cannot parse document: {ex}")
+            raise ProcessedException(ex)
 
         tag = next(tags(self.html.children))
         if tag is not None and tag.name == "def":
@@ -56,10 +61,10 @@ class Document:
         for tag in self.html.find_all("include"):
             tag.extract()
             src = tag.attrs["src"]
-            component = Document(self.cwd / src, self)
-            assert (
-                component.is_component
-            ), f"Included file at '{component.path}' does not define a component"
+            component = Document(self.cwd / src, parent=self)
+            if not component.is_component:
+                component.adapter.critical("Does not define a component")
+                raise ProcessedException(None)
             self.components[component.name] = component
 
     def render(

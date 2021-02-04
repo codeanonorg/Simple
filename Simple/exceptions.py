@@ -5,6 +5,7 @@
  https://opensource.org/licenses/MIT
 """
 
-from Simple import run
 
-run()
+class ProcessedException(Exception):
+    def __init__(self, exn: Exception) -> None:
+        self.exn = exn
