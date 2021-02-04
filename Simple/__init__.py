@@ -6,10 +6,11 @@
 """
 
 import logging
+import json
 from textwrap import wrap
 
 from functools import partial
-from typing import List, Literal, Union
+from typing import List, Literal, Optional, Union
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentTypeError, Namespace
 from dataclasses import dataclass
@@ -23,6 +24,7 @@ from .logs import create_logger
 class Options:
     input: Path
     output: Path
+    data: Optional[Path]
     log_level: int
 
 
@@ -64,21 +66,35 @@ def parse_args(args: List[str]) -> Options:
         help="Output file path",
     )
     parser.add_argument(
+        "-d",
+        "--data",
+        nargs="?",
+        type=partial(filepath, "read"),
+        help="Optional data in the form of a JSON file",
+    )
+    parser.add_argument(
         "-v", action="count", default=0, help="Increase verbosity level"
     )
     parsed: Namespace = parser.parse_args(args[1:])
-    return Options(parsed.input[0], parsed.output[0], logging.WARN - parsed.v * 10)
+    return Options(
+        parsed.input[0], parsed.output[0], parsed.data, logging.WARN - parsed.v * 10
+    )
 
 
 def main(args: List[str]) -> int:
     opts = parse_args(args)
     logger = create_logger(opts.log_level)
 
+    if opts.data is not None:
+        with opts.data.open("rt") as d:
+            data = json.load(d)
+    else:
+        data = {}
     try:
         doc = Document(opts.input)
         with opts.output.open("wt") as f:
             logger.info(f"Writing output to '{opts.output}'")
-            f.write(doc.render({}).prettify())
+            f.write(doc.render(data).prettify())
     except ProcessException as ex:
         ex.doc.adapter.critical(
             str(ex.exn), exc_info=None if opts.log_level > logging.DEBUG else ex
