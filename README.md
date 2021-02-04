@@ -18,5 +18,3 @@ $ python -m Simple examples/main.html
 ## It's simple to use
 
 ## It's simple to contribute
-
-
