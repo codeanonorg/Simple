@@ -40,12 +40,12 @@ class Document:
         try:
             with self.path.open("rt") as f:
                 logger.debug(f"Parsing file '{path}'")
-                html = BeautifulSoup(f, "html.parser")
+                root = BeautifulSoup(f, "html.parser")
         except IOError as ex:
             self.adapter.critical(f"Cannot parse document: {ex}")
             raise ProcessException(self, Exception(f"Cannot parse document: {ex}"))
 
-        self.html = next(tags(itertools.chain(html.children)))
+        self.html = next(tags(itertools.chain(root.children)))
         if self.html is not None and self.html.name == "def":
             self.adapter.debug("Input is defining a component")
             self.is_component = True
@@ -60,13 +60,13 @@ class Document:
             self.name = "__root__"
 
         self.components = {}
-        for html in self.html.find_all("include"):  # type: Tag
-            html.extract()
-            if "src" not in html.attrs:
+        for tag in self.html.find_all("include"):  # type: Tag
+            tag.extract()
+            if "src" not in tag.attrs:
                 raise ProcessException(
                     self, Exception("Component include does not have a source link")
                 )
-            src = html.attrs["src"]
+            src = tag.attrs["src"]
             component = Document(self.cwd / src, parent=self)
             if not component.is_component:
                 raise ProcessException(
