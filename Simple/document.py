@@ -45,7 +45,6 @@ class Document:
                 logger.info(f"Parsing file '{path}'")
                 self.html = read(f)
         except IOError as ex:
-            self.adapter.critical(f"Cannot parse document: {ex}")
             raise ProcessException(self, Exception(f"Cannot parse document: {ex}"))
         except DocumentException as ex:
             raise ProcessException(self, ex)
@@ -54,7 +53,7 @@ class Document:
         if root is None:
             raise ProcessException(self, Exception("HTML is empty"))
         if root.name == "def":
-            self.adapter.debug("Input is defining a component")
+            self.adapter.debug("Input is defining a component", extra=dict(node=root))
             self.is_component = True
             self.name = root.attrs["name"].lower()
             try:
@@ -102,7 +101,10 @@ class Document:
                 component = self.components[node.name]
                 for s in node.attrs.keys():
                     if s not in component.inputs:
-                        self.adapter.warn(f"Unknown attribute {s!r} in <{node.name}/>")
+                        self.adapter.warn(
+                            f"Unknown attribute {s!r} in <{node.name}/>",
+                            extra=dict(node=node),
+                        )
                 child_context = {**context, **node.attrs}
                 return component.render(child_context).children
 
@@ -112,16 +114,20 @@ class Document:
                 if "prop" not in node.attrs:
                     self.adapter.warn(
                         f"Content tag should have a prop attribute",
-                        extra=dict(node=node),
+                        node=node,
                     )
                 elif node.attrs["prop"] not in context:
                     self.adapter.warn(
                         f"Variable {node.attrs['prop']!r} not defined in context",
-                        extra=dict(node=node, context=context),
+                        extra=dict(
+                            node=node,
+                        ),
                     )
                 self.adapter.debug(
                     f"Replacing reference to {node.attrs['prop']!r}",
-                    extra=dict(node=node),
+                    extra=dict(
+                        node=node,
+                    ),
                 )
                 text = context[node.attrs["prop"]]
                 return [TextNode(range=node.range.start.range(text), text=text)]

@@ -30,20 +30,20 @@ AssocList = List[Tuple[K, V]]
 
 # From https://html.spec.whatwg.org/multipage/syntax.html#void-elements
 SELF_CLOSING_TAGS = [
-    # "area",
-    # "base",
-    # "br",
-    # "col",
-    # "embed",
-    # "hr",
-    # "img",
-    # "input",
-    # "link",
-    # "meta",
-    # "param",
-    # "source",
-    # "track",
-    # "wbr",
+    "area",
+    "base",
+    "br",
+    "col",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "link",
+    "meta",
+    "param",
+    "source",
+    "track",
+    "wbr",
 ]
 
 
@@ -96,7 +96,9 @@ class DocumentParser(HTMLParser):
             from .exceptions import DocumentException
 
             raise DocumentException(
-                "Document is not complete", self._tag_stack_top().range
+                "Document is not complete",
+                "You are probably missing a closing tag",
+                self._tag_stack_top(),
             )
         return Document(self.children)
 

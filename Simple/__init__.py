@@ -98,7 +98,9 @@ def main(args: List[str]) -> int:
             f.write(html(doc.render(data)))
     except ProcessException as ex:
         ex.doc.adapter.critical(
-            str(ex.exn), exc_info=None if opts.log_level > logging.DEBUG else ex
+            str(ex.exn),
+            exc_info=None if opts.log_level > logging.DEBUG else ex,
+            **ex.extra,
         )
         return 1
     except Exception as ex:
