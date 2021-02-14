@@ -5,6 +5,7 @@
  https://opensource.org/licenses/MIT
 """
 
+from Simple.html.exceptions import DocumentException
 from .exceptions import ProcessException
 from .logs import DocumentLogAdapter
 import itertools
@@ -12,9 +13,10 @@ import os
 import logging
 import copy
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, TypeVar
+from typing import *
 
-from .htmlparser import Node, Tag, Document as HTMLDocument, TextNode, read
+from .html.tags import Node, Tag, TextNode
+from .html.document import Document as HTMLDocument, read
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +24,7 @@ logger = logging.getLogger(__name__)
 class Document:
     path: Path
     cwd: Path
+    html: HTMLDocument
     adapter: DocumentLogAdapter
     parent: Optional["Document"]
     is_component: bool
@@ -44,8 +47,8 @@ class Document:
         except IOError as ex:
             self.adapter.critical(f"Cannot parse document: {ex}")
             raise ProcessException(self, Exception(f"Cannot parse document: {ex}"))
-        if self.html is None:
-            raise ProcessException(self, ValueError("HTML document is incomplete"))
+        except DocumentException as ex:
+            raise ProcessException(self, ex)
 
         root = self.html.root
         if root is None:

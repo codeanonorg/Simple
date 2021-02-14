@@ -5,7 +5,6 @@
  https://opensource.org/licenses/MIT
 """
 
-from Simple.htmlparser import html
 import logging
 import json
 from textwrap import wrap
@@ -19,6 +18,7 @@ from dataclasses import dataclass
 from .document import Document
 from .exceptions import ProcessException
 from .logs import create_logger
+from .html import html
 
 
 @dataclass
