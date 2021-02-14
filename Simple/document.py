@@ -39,7 +39,7 @@ class Document:
 
         try:
             with self.path.open("rt") as f:
-                logger.debug(f"Parsing file '{path}'")
+                logger.info(f"Parsing file '{path}'")
                 self.html = read(f)
         except IOError as ex:
             self.adapter.critical(f"Cannot parse document: {ex}")
@@ -86,7 +86,9 @@ class Document:
         return HTMLDocument(
             [
                 cnode
-                for node in self.html.children
+                for node in (
+                    self.html.root.children if self.is_component else self.html.children
+                )
                 for cnode in self.inflate(node, context)
             ]
         )

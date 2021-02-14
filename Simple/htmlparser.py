@@ -25,6 +25,24 @@ logger = logging.getLogger(__name__)
 K, V = tuple(map(TypeVar, ["K", "V"]))
 AssocList = List[Tuple[K, V]]
 
+# From https://html.spec.whatwg.org/multipage/syntax.html#void-elements
+SELF_CLOSING_TAGS = [
+    "area",
+    "base",
+    "br",
+    "col",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "link",
+    "meta",
+    "param",
+    "source",
+    "track",
+    "wbr",
+]
+
 
 class HTML:
     def __html__(self) -> str:
@@ -221,11 +239,14 @@ class DocumentParser(HTMLParser):
         return None
 
     def handle_starttag(self, tag: str, attrs: AssocList[str, str]):
-        text = self.get_starttag_text()
-        child = Tag(
-            name=tag, attrs=dict(attrs), text=text, range=self.getpos().range(text)
-        )
-        self._push_node(child)
+        if tag in SELF_CLOSING_TAGS:
+            self.handle_startendtag(tag, attrs)
+        else:
+            text = self.get_starttag_text()
+            child = Tag(
+                name=tag, attrs=dict(attrs), text=text, range=self.getpos().range(text)
+            )
+            self._push_node(child)
 
     def handle_endtag(self, tag: str):
         node = self._tag_stack.pop()
