@@ -13,6 +13,7 @@ from typing import (
     List,
     Literal,
     Optional,
+    Sequence,
     TextIO,
     Tuple,
     TypeVar,
@@ -22,10 +23,7 @@ from typing import (
 logger = logging.getLogger(__name__)
 
 K, V = tuple(map(TypeVar, ["K", "V"]))
-
-
-class AssocList(List[Tuple[K, V]]):
-    pass
+AssocList = List[Tuple[K, V]]
 
 
 class HTML:
@@ -58,13 +56,27 @@ class Range:
 
 
 @dataclass()
-class Node(HTML):
-    range: Range
+class Node(HTML, Iterable["Node"]):
+    range: Range = field(repr=False)
     text: Optional[str]
-    parent: Optional["Tag"] = field(init=False, default=None)
+    parent: Optional["Tag"] = field(init=False, repr=False, default=None)
+
+    def replace_with_all(self, nodes: Sequence["Node"]) -> None:
+        if self.parent is None:
+            return
+        ix = self.parent.children.index(self)
+        self.parent.children = (
+            self.parent.children[:ix] + nodes + self.parent.children[ix:]
+        )
+
+    def __str__(self):
+        return f"[{self.__class__.__name__} len={len(self.text)}]"
 
     def __html__(self):
         return self.text
+
+    def __iter__(self) -> Iterator["Node"]:
+        yield self
 
 
 class TextNode(Node):
@@ -90,7 +102,7 @@ class Comment(Node):
 class Tag(Node):
     name: str
     attrs: Dict[str, str]
-    children: List[Node] = field(default_factory=list)
+    children: List[Node] = field(default_factory=list, repr=False)
     self_closing: bool = field(default=False, repr=False)
 
     @property
@@ -98,7 +110,7 @@ class Tag(Node):
         return "".join(map(html, self.children))
 
     def inner_tags(self) -> Iterable["Tag"]:
-        return filter(lambda s: isinstance(s, Tag), self.children)
+        return filter(lambda s: isinstance(s, Tag), self)
 
     def add_child(self, node: "Node"):
         node.parent = self
@@ -116,12 +128,7 @@ class Tag(Node):
         return self
 
     def replace_with_children(self) -> None:
-        if self.parent is None:
-            return
-        ix = self.parent.children.index(self)
-        self.parent.children = (
-            self.parent.children[:ix] + self.children + self.parent.children[ix:]
-        )
+        self.replace_with_all(self.children)
 
     def consolidate_children(self) -> None:
         def do_one(
@@ -150,6 +157,12 @@ class Tag(Node):
         yield self
         for child in itt.chain(*map(iter, self.children)):
             yield child
+
+    def __str__(self):
+        if self.self_closing:
+            return self.text
+        else:
+            return f"{self.text}{''.join(map(str, self.children))}</{self.name}>"
 
     def __html__(self):
         if self.self_closing:
@@ -208,7 +221,6 @@ class DocumentParser(HTMLParser):
         return None
 
     def handle_starttag(self, tag: str, attrs: AssocList[str, str]):
-        logger.debug("<%s %s>", tag, attrs)
         text = self.get_starttag_text()
         child = Tag(
             name=tag, attrs=dict(attrs), text=text, range=self.getpos().range(text)
@@ -216,13 +228,11 @@ class DocumentParser(HTMLParser):
         self._push_node(child)
 
     def handle_endtag(self, tag: str):
-        logger.debug("</%s>", tag)
         node = self._tag_stack.pop()
         node.range.end = self.getpos()
         node.consolidate_children()
 
     def handle_startendtag(self, tag: str, attrs: AssocList[str, str]) -> None:
-        logger.debug("<%s %s/>", tag, attrs)
         text = self.get_starttag_text()
         node = Tag(
             name=tag,
@@ -234,7 +244,6 @@ class DocumentParser(HTMLParser):
         self._push_node(node, skip_stack=True)
 
     def handle_data(self, data: str) -> None:
-        logger.debug("Data: %s", data)
         self._push_node(TextNode(range=self.getpos().range(data), text=data))
 
     def handle_comment(self, data: str) -> None:

@@ -12,9 +12,9 @@ import os
 import logging
 import copy
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, List, Optional, TypeVar
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, TypeVar
 
-from .htmlparser import Tag, Document as HTMLDocument, read
+from .htmlparser import Node, Tag, Document as HTMLDocument, TextNode, read
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class Document:
         if root.name == "def":
             self.adapter.debug("Input is defining a component")
             self.is_component = True
-            self.name = str(root.attrs["name"])
+            self.name = root.attrs["name"].lower()
             try:
                 self.inputs = [s.strip() for s in root.attrs["props"].split(",")]
             except KeyError:
@@ -65,56 +65,63 @@ class Document:
 
         self.components = {}
         for tag in self.html.find_all("include"):
-            tag.remove()
+            # tag.remove()
             if "src" not in tag.attrs:
                 raise ProcessException(
-                    self, Exception("Component include does not have a source link")
+                    self,
+                    Exception("Component include does not have a source link"),
+                    extra=dict(node=tag),
                 )
             src = tag.attrs["src"]
             component = Document(self.cwd / src, parent=self)
             if not component.is_component:
                 raise ProcessException(
-                    component, Exception("Does not define a component")
+                    component,
+                    Exception("Does not define a component"),
+                    extra=dict(node=tag),
                 )
             self.components[component.name] = component
 
     def render(self, context: Dict[str, str]) -> HTMLDocument:
-        # Getting a working copy of the structure
-        html = copy.deepcopy(self.html)
+        return HTMLDocument(
+            [
+                cnode
+                for node in self.html.children
+                for cnode in self.inflate(node, context)
+            ]
+        )
 
-        self._replace_props(html, context)
-        self._replace_components(html, context)
+    def inflate(self, node: Node, context: Dict[str, str]) -> List[Node]:
+        if isinstance(node, Tag):
+            if node.name in self.components:
+                component = self.components[node.name]
+                for s in node.attrs.keys():
+                    if s not in component.inputs:
+                        self.adapter.warn(f"Unknown attribute {s!r} in <{node.name}/>")
+                child_context = {**context, **node.attrs}
+                return component.render(child_context).children
 
-        return html
-
-    def _replace_components(self, html: HTMLDocument, context: Dict[str, str]):
-        for name, component in self.components.items():
-            tags = html.find_all(name)
-            if len(tags) == 0:
-                self.adapter.warn(f"<{name} /> is unused")
-            else:
-                for tag in tags:
-                    props = dict(tag.attrs)
-                    for s in props.keys():
-                        if s not in component.inputs:
-                            self.adapter.warn(f"Unknown attribute '{s}' in <{name} />")
-                    child_context = {**context, **props}
-                    chtml = component.render(child_context)
-                    tag.replace_with(chtml)
-                    chtml.replace_with_children()
-
-    def _replace_props(self, html: HTMLDocument, context: Dict[str, str]):
-        for c in html.find_all("content"):
-            if "prop" not in c.attrs:
-                self.adapter.warn(f"Content tag should have a 'prop' attribute")
-                if c.remove is not None:
-                    c.remove()
-            elif c.attrs["prop"] not in context:
-                self.adapter.warn(
-                    f"Variable '{c.attrs['prop']}' not defined in context"
+            elif node.name == "include":
+                return []
+            elif node.name == "content":
+                if "prop" not in node.attrs:
+                    self.adapter.warn(
+                        f"Content tag should have a prop attribute",
+                        extra=dict(node=node),
+                    )
+                elif node.attrs["prop"] not in context:
+                    self.adapter.warn(
+                        f"Variable {node.attrs['prop']!r} not defined in context",
+                        extra=dict(node=node, context=context),
+                    )
+                self.adapter.debug(
+                    f"Replacing reference to {node.attrs['prop']!r}",
+                    extra=dict(node=node),
                 )
-                if c.remove is not None:
-                    c.remove()
-            else:
-                self.adapter.debug(f"Replacing reference to {c.attrs['prop']}")
-                c.replace_with(context[c.attrs["prop"]])
+                text = context[node.attrs["prop"]]
+                return [TextNode(range=node.range.start.range(text), text=text)]
+            children = [n for c in node.children for n in self.inflate(c, context)]
+            node = copy.deepcopy(node)
+            node.children = children
+            return [node]
+        return [node]
