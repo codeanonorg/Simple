@@ -14,7 +14,7 @@ import copy
 from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Optional, TypeVar
 
-from bs4 import BeautifulSoup, Tag  # type: ignore
+from .htmlparser import Tag, Document as HTMLDocument, read
 
 logger = logging.getLogger(__name__)
 
@@ -40,18 +40,22 @@ class Document:
         try:
             with self.path.open("rt") as f:
                 logger.debug(f"Parsing file '{path}'")
-                root = BeautifulSoup(f, "html.parser")
+                self.html = read(f)
         except IOError as ex:
             self.adapter.critical(f"Cannot parse document: {ex}")
             raise ProcessException(self, Exception(f"Cannot parse document: {ex}"))
+        if self.html is None:
+            raise ProcessException(self, ValueError("HTML document is incomplete"))
 
-        self.html = next(tags(itertools.chain(root.children)))
-        if self.html is not None and self.html.name == "def":
+        root = self.html.root
+        if root is None:
+            raise ProcessException(self, Exception("HTML is empty"))
+        if root.name == "def":
             self.adapter.debug("Input is defining a component")
             self.is_component = True
-            self.name = str(self.html.attrs["name"])
+            self.name = str(root.attrs["name"])
             try:
-                self.inputs = [s.strip() for s in self.html.attrs["props"].split(",")]
+                self.inputs = [s.strip() for s in root.attrs["props"].split(",")]
             except KeyError:
                 self.inputs = []
         else:
@@ -60,8 +64,8 @@ class Document:
             self.name = "__root__"
 
         self.components = {}
-        for tag in self.html.find_all("include"):  # type: Tag
-            tag.extract()
+        for tag in self.html.find_all("include"):
+            tag.remove()
             if "src" not in tag.attrs:
                 raise ProcessException(
                     self, Exception("Component include does not have a source link")
@@ -74,7 +78,7 @@ class Document:
                 )
             self.components[component.name] = component
 
-    def render(self, context: Dict[str, str]) -> Tag:
+    def render(self, context: Dict[str, str]) -> HTMLDocument:
         # Getting a working copy of the structure
         html = copy.deepcopy(self.html)
 
@@ -83,9 +87,9 @@ class Document:
 
         return html
 
-    def _replace_components(self, html: BeautifulSoup, context: Dict[str, str]):
+    def _replace_components(self, html: HTMLDocument, context: Dict[str, str]):
         for name, component in self.components.items():
-            tags = html.find_all(name.lower())
+            tags = html.find_all(name)
             if len(tags) == 0:
                 self.adapter.warn(f"<{name} /> is unused")
             else:
@@ -99,7 +103,7 @@ class Document:
                     tag.replace_with(chtml)
                     chtml.replace_with_children()
 
-    def _replace_props(self, html: BeautifulSoup, context: Dict[str, str]):
+    def _replace_props(self, html: HTMLDocument, context: Dict[str, str]):
         for c in html.find_all("content"):
             if "prop" not in c.attrs:
                 self.adapter.warn(f"Content tag should have a 'prop' attribute")
@@ -114,7 +118,3 @@ class Document:
             else:
                 self.adapter.debug(f"Replacing reference to {c.attrs['prop']}")
                 c.replace_with(context[c.attrs["prop"]])
-
-
-def tags(it: Iterator[Any]) -> Iterator[Tag]:
-    return filter(lambda v: isinstance(v, Tag), it)

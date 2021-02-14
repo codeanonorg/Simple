@@ -5,6 +5,12 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Unit Tests",
+      "type": "python",
+      "request": "launch",
+      "module": "tests.unit"
+    },
+    {
       "name": "Simple",
       "type": "python",
       "args": ["examples/main.html", "--output=public/main.html", "-vv"],

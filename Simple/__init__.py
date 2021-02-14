@@ -5,6 +5,7 @@
  https://opensource.org/licenses/MIT
 """
 
+from Simple.htmlparser import html
 import logging
 import json
 from textwrap import wrap
@@ -94,7 +95,7 @@ def main(args: List[str]) -> int:
         doc = Document(opts.input)
         with opts.output.open("wt") as f:
             logger.info(f"Writing output to '{opts.output}'")
-            f.write(doc.render(data).prettify())
+            f.write(html(doc.render(data)))
     except ProcessException as ex:
         ex.doc.adapter.critical(
             str(ex.exn), exc_info=None if opts.log_level > logging.DEBUG else ex
