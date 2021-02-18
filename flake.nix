@@ -1,11 +1,16 @@
 {
   description = "A very basic flake";
 
-  outputs = { self, nixpkgs }: {
+  inputs.flake-utils.url = "github:numtide/flake-utils";
 
-    packages.x86_64-linux.hello = nixpkgs.legacyPackages.x86_64-linux.hello;
-
-    defaultPackage.x86_64-linux = self.packages.x86_64-linux.hello;
-
-  };
+  outputs = { self, nixpkgs, flake-utils }:
+  let inherit (flake-utils.lib) allSystems eachSystem mkApp; in
+  eachSystem allSystems (system: 
+  let  pkgs = nixpkgs.legacyPackages.${system}; in
+  rec {
+    packages.simple = pkgs.poetry2nix.mkPoetryApplication { projectDir = ./.; python = pkgs.python39; };
+    defaultPackage = packages.simple;
+    apps.simple = mkApp { drv = packages.simple; };
+    defaultApp = apps.simple;
+  });
 }

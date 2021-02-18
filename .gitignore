@@ -134,3 +134,6 @@ dmypy.json
 
 # Examples
 public/
+
+# Nix artifacts
+/result
