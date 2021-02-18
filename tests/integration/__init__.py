@@ -26,9 +26,7 @@ class FolderExpansionTest(unittest.TestCase):
                 data = json.load(d)
         else:
             data = {}
-        self.assertEqual(
-            input.render(data).prettify(), expected.html.prettify(), str(self.path)
-        )
+        self.assertEqual(input.render(data), expected.html, str(self.path))
 
 
 class IntegrationTestSuite(unittest.TestSuite):

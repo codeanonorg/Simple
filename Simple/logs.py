@@ -6,6 +6,8 @@ import sys
 import logging
 from typing import List, MutableMapping, Optional, Tuple
 
+from .html.tags import Node
+
 FORMAT = "%(levelname)s: %(message)s"
 
 
@@ -23,20 +25,31 @@ class DocumentLogAdapter(logging.LoggerAdapter):
         relpath = doc.path.relative_to(cwd)
         include_stack = self._get_include_stack()
         if len(include_stack) > 0:
-            incstack_str = "\n\t" + "\n\t".join(
+            include_stack_str = "\n\t" + "\n\t".join(
                 "included from " + str(s.relative_to(cwd)) for s in include_stack
             )
         else:
-            incstack_str = ""
-        extra = {"document": doc, "include-stack": include_stack}
-        if "pos" in kwargs:
-            (line, col) = kwargs["pos"]
-            return f"{relpath}:{line}:{col} {msg}{incstack_str}", {
+            include_stack_str = ""
+        extra = {
+            **kwargs.get("extra", {}),
+            "document": doc,
+            "include-stack": include_stack,
+        }
+        message = f"{msg}{include_stack_str}"
+        if self.logger.level <= logging.DEBUG and "context" in extra:
+            from pprint import pformat
+
+            message += f"\n\tContext: {pformat(extra['context'])}"
+
+        if "node" in extra:
+            node: Node = extra["node"]
+            range = node.range
+            return f"{relpath}:{range} {message}", {
                 **kwargs,
                 "extra": extra,
             }
         else:
-            return f"{relpath}: {msg}{incstack_str}", {**kwargs, "extra": extra}
+            return f"{relpath}: {message}", {**kwargs, "extra": extra}
 
     def _get_include_stack(self):
         from .document import Document

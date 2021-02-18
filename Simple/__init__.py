@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from .document import Document
 from .exceptions import ProcessException
 from .logs import create_logger
+from .html import html
 
 
 @dataclass
@@ -94,10 +95,12 @@ def main(args: List[str]) -> int:
         doc = Document(opts.input)
         with opts.output.open("wt") as f:
             logger.info(f"Writing output to '{opts.output}'")
-            f.write(doc.render(data).prettify())
+            f.write(html(doc.render(data)))
     except ProcessException as ex:
         ex.doc.adapter.critical(
-            str(ex.exn), exc_info=None if opts.log_level > logging.DEBUG else ex
+            str(ex.exn),
+            exc_info=None if opts.log_level > logging.DEBUG else ex,
+            **ex.extra,
         )
         return 1
     except Exception as ex:
